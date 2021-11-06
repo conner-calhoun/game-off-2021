@@ -9,6 +9,7 @@ public class AntAnimator : MonoBehaviour
     public int smoothness = 1;
     public float stepHeight = 0.1f;
     public bool bodyOrientation = true;
+    public float zOffset = 1f;
 
     private float raycastRange = 1f;
     private Vector3[] defaultLegPositions;
@@ -21,7 +22,7 @@ public class AntAnimator : MonoBehaviour
     private Vector3 lastVelocity;
     private Vector3 lastBodyPos;
 
-    private float velocityMultiplier = 15f;
+    private float velocityMultiplier = 5f;
 
     static Vector3[] MatchToSurfaceFromAbove(Vector3 point, float halfRange, Vector3 up)
     {
@@ -52,6 +53,7 @@ public class AntAnimator : MonoBehaviour
         for (int i = 0; i < nbLegs; ++i)
         {
             defaultLegPositions[i] = legTargets[i].localPosition;
+            defaultLegPositions[i].z -= zOffset; // This was needed due to some weird leg behavior
             lastLegPositions[i] = legTargets[i].position;
             legMoving[i] = false;
         }
@@ -98,8 +100,12 @@ public class AntAnimator : MonoBehaviour
             }
         }
         for (int i = 0; i < nbLegs; ++i)
+        {
             if (i != indexToMove)
+            {
                 legTargets[i].position = lastLegPositions[i];
+            }
+        }
 
         if (indexToMove != -1 && !legMoving[0])
         {
