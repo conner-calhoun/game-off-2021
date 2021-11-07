@@ -7,6 +7,7 @@ public class AntController : MonoBehaviour
     public float speed = 1f;
     public float forwardRay = 2f;
     public float backwardRay = 3f;
+    public float rayLength = 1.5f; // This will need to be tweaked for larger ants
 
     Rigidbody body;
     Transform rayOrigin;
@@ -36,7 +37,7 @@ public class AntController : MonoBehaviour
         if (Physics.Raycast(rayOrigin.position, -transform.up + (transform.forward / forwardRay), out hit))
         {
             // Handle Inner Corners
-            if (hit.distance < 1.5)
+            if (hit.distance < rayLength)
             {
                 // Debug.DrawLine(rayOrigin.position, hit.point, Color.yellow);
                 SetGroundNormal(hit.normal);
@@ -45,12 +46,8 @@ public class AntController : MonoBehaviour
         if (Physics.Raycast(rayOrigin.position, -transform.up - body.transform.forward / backwardRay, out hit))
         {
             // Handle Outer Corners
-            if (hit.distance < 3)
-            {
-                // Debug.DrawLine(rayOrigin.position, hit.point, Color.red);
-                SetGroundNormal(hit.normal);
-            }
-
+            // Debug.DrawLine(rayOrigin.position, hit.point, Color.red);
+            SetGroundNormal(hit.normal);
         }
     }
 
@@ -65,7 +62,7 @@ public class AntController : MonoBehaviour
         if (body.velocity.magnitude < speed)
         {
             float value = Input.GetAxis("Vertical");
-            if (value != 0)
+            if (value > 0)
             {
                 body.transform.Translate(Vector3.forward * value * Time.fixedDeltaTime * 2.5f);
             }
