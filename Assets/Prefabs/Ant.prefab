@@ -945,6 +945,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Ant
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: f2c70b0490e77b14d8b38d14fe9681f9, type: 3}
+      propertyPath: m_TagString
+      value: AntIgnoreCollision
+      objectReference: {fileID: 0}
     - target: {fileID: 1124798510726485041, guid: f2c70b0490e77b14d8b38d14fe9681f9, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0.0018319685
@@ -1558,8 +1562,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 2
-  forwardRay: 2
-  backwardRay: 2
+  rotationSpeed: 5
 --- !u!114 &640179703
 MonoBehaviour:
   m_ObjectHideFlags: 0
