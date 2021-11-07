@@ -7,8 +7,11 @@ public class PlayerController : MonoBehaviour
     public Transform playerCamera = null;
     public float mouseSensitivity = 1f;
     public float walkSpeed = 10f;
-    public float gravity = -35f;
+    public float gravity = -40f;
     public float jumpHeight = 3f;
+    public float jetPackPower = 1f;
+    public float jetPackFuelMax = 200f;
+    public RectTransform jetPackBar = null;
     [Range(0f, 0.5f)] public float moveSmoothTime = 0.1f;
     [Range(0f, 0.5f)] public float mouseSmoothTime = 0.03f;
 
@@ -19,13 +22,18 @@ public class PlayerController : MonoBehaviour
     private Vector2 currentDirectionVelocity = Vector2.zero;
     private Vector2 currentMouseDelta = Vector2.zero;
     private Vector2 currentMouseDeltaVelocity = Vector2.zero;
+    private float jetPackFuel = 0f;
+    private bool jetPackRanOut = false;
 
     void Start()
     {
+        // get the character controller
         controller = GetComponent <CharacterController>();
 
         // turn off the cursor
         Cursor.lockState = CursorLockMode.Locked;
+
+        jetPackFuel = jetPackFuelMax;
     }
 
     void Update()
@@ -34,7 +42,7 @@ public class PlayerController : MonoBehaviour
 
         UpdateMovement();
 
-        if (Input.GetKeyDown("escape"))
+        if (Input.GetButtonDown("Cancel"))
         {
             // turn on the cursor
             Cursor.lockState = CursorLockMode.None;
@@ -75,10 +83,47 @@ public class PlayerController : MonoBehaviour
                 // add velocity upward for jump
                 velocityY = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
+
+            if (jetPackFuel < jetPackFuelMax)
+            {
+                // regenerate jet pack fuel
+                jetPackFuel += 2f;
+            }
         }
 
-        // gravity
-        velocityY += gravity * Time.deltaTime;
+        if (Input.GetKey("left shift") && jetPackFuel <= 1)
+        {
+            jetPackRanOut = true;
+        }
+        if (Input.GetKeyUp("left shift"))
+        {
+            jetPackRanOut = false;
+        }
+
+        if (Input.GetKey("left shift") && jetPackFuel > 1 && !jetPackRanOut)
+        {
+            // add velocity upward for jet pack
+            velocityY += jetPackPower;
+            // clamp y velocity to reasonable speeds
+            velocityY = Mathf.Clamp(velocityY, -30, 10);
+
+            // use up jet pack fuel
+            jetPackFuel -= 1f;
+        }
+        else
+        {
+            // gravity
+            velocityY += gravity * Time.deltaTime;
+
+            if (jetPackFuel < jetPackFuelMax)
+            {
+                // slowly regenerate fuel
+                jetPackFuel += 0.25f;
+            }
+        }
+
+        // update jet pack fuel indicator
+        jetPackBar.sizeDelta = new Vector2(jetPackFuel, jetPackBar.sizeDelta.y);
 
         // calculate velocity
         Vector3 velocity = (transform.forward * currentDirection.y + transform.right * currentDirection.x) * walkSpeed + Vector3.up * velocityY;

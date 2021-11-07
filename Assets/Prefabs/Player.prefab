@@ -215,7 +215,9 @@ MonoBehaviour:
   playerCamera: {fileID: 1066483993584848278}
   mouseSensitivity: 1
   walkSpeed: 10
-  gravity: -35
+  gravity: -40
   jumpHeight: 3
+  jetPackPower: 1
+  jetPackFuel: 100
   moveSmoothTime: 0.1
   mouseSmoothTime: 0.03
