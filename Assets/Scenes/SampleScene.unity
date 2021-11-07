@@ -1681,8 +1681,8 @@ Transform:
   - {fileID: 1980868690}
   - {fileID: 1028544919}
   - {fileID: 1202357938}
-  - {fileID: 1097689730}
   - {fileID: 884645878}
+  - {fileID: 1097689730}
   - {fileID: 843957081}
   - {fileID: 1412698160}
   m_Father: {fileID: 0}
@@ -2262,7 +2262,7 @@ MonoBehaviour:
   MessageBufferSize: 5120
   MaxConnections: 100
   MaxSentMessageQueueSize: 128
-  ConnectAddress: 127.0.0.1
+  ConnectAddress: 192.168.3.165
   ConnectPort: 7777
   ServerListenPort: 7777
   MessageSendMode: 0
