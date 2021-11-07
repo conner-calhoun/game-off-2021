@@ -2,18 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+//TODO: Make sure everything is framerate-independent (I'm looking at you, jet pack code)
+
 public class PlayerController : MonoBehaviour
 {
     public Transform playerCamera = null;
     public float mouseSensitivity = 1f;
+    [Range(0f, 0.5f)] public float moveSmoothTime = 0.1f;
+    [Range(0f, 0.5f)] public float mouseSmoothTime = 0.03f;
     public float walkSpeed = 10f;
     public float gravity = -40f;
     public float jumpHeight = 3f;
     public float jetPackPower = 1f;
     public float jetPackFuelMax = 200f;
     public RectTransform jetPackBar = null;
-    [Range(0f, 0.5f)] public float moveSmoothTime = 0.1f;
-    [Range(0f, 0.5f)] public float mouseSmoothTime = 0.03f;
+    public float bulletSpeed = 50f;
+    public Rigidbody bullet = null;
+    public float timeBetweenShooting = 0.25f;
 
     private float cameraPitch = 0f;
     private float velocityY = 0f;
@@ -24,6 +29,8 @@ public class PlayerController : MonoBehaviour
     private Vector2 currentMouseDeltaVelocity = Vector2.zero;
     private float jetPackFuel = 0f;
     private bool jetPackRanOut = false;
+    private bool readyToShoot = true;
+    private bool allowInvoke = true;
 
     void Start()
     {
@@ -41,6 +48,8 @@ public class PlayerController : MonoBehaviour
         UpdateMouseLook();
 
         UpdateMovement();
+
+        UpdateShooting();
 
         if (Input.GetButtonDown("Cancel"))
         {
@@ -129,5 +138,51 @@ public class PlayerController : MonoBehaviour
         Vector3 velocity = (transform.forward * currentDirection.y + transform.right * currentDirection.x) * walkSpeed + Vector3.up * velocityY;
         // move using the character controller
         controller.Move(velocity * Time.deltaTime);
+    }
+
+    void UpdateShooting()
+    {
+        if (Input.GetButtonDown("Fire1") && readyToShoot)
+        {
+            readyToShoot = false;
+
+            Vector3 bulletPosition = transform.position;
+            bulletPosition.y += 0.5f;
+
+            // calculate direction to shoot bullet in
+            Ray ray = playerCamera.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f,  0.5f, 0f));
+            RaycastHit hit;
+            Vector3 targetPoint;
+            if (Physics.Raycast(ray, out hit))
+            {
+                targetPoint = hit.point;
+            }
+            else
+            {
+                targetPoint = ray.GetPoint(75);
+            }
+            Vector3 bulletDirection = targetPoint - bulletPosition;
+
+            // create bullet and rotate it
+            Rigidbody bulletClone = (Rigidbody)Instantiate(bullet, bulletPosition, Quaternion.identity);
+            bulletClone.transform.forward = bulletDirection.normalized;
+
+            // add force to bullet
+            bulletClone.GetComponent<Rigidbody>().AddForce(bulletDirection.normalized * bulletSpeed, ForceMode.Impulse);
+
+            if (allowInvoke)
+            {
+                // wait until can shoot again
+                Invoke("ResetShot", timeBetweenShooting);
+                allowInvoke = false;
+            }
+        }
+    }
+
+    void ResetShot()
+    {
+        // can shoot again
+        readyToShoot = true;
+        allowInvoke = true;
     }
 }
