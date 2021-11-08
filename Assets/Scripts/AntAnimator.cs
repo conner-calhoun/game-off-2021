@@ -10,6 +10,7 @@ public class AntAnimator : MonoBehaviour
     public float stepHeight = 0.1f;
     public bool bodyOrientation = true;
     public float zOffset = 1f;
+    public float velocityMultiplier = 2f; // This is exposed because it may need tweaks depending on the speed of the ant
 
     private float raycastRange = 1f;
     private Vector3[] defaultLegPositions;
@@ -21,8 +22,6 @@ public class AntAnimator : MonoBehaviour
     private Vector3 velocity;
     private Vector3 lastVelocity;
     private Vector3 lastBodyPos;
-
-    private float velocityMultiplier = 5f;
 
     static Vector3[] MatchToSurfaceFromAbove(Vector3 point, float halfRange, Vector3 up)
     {
@@ -103,6 +102,7 @@ public class AntAnimator : MonoBehaviour
         {
             if (i != indexToMove)
             {
+                // Not the moving leg, set it to the previous position
                 legTargets[i].position = lastLegPositions[i];
             }
         }
@@ -118,13 +118,19 @@ public class AntAnimator : MonoBehaviour
         lastBodyPos = transform.position;
         if (nbLegs > 3 && bodyOrientation)
         {
-            Vector3 v1 = legTargets[0].position - legTargets[1].position;
-            Vector3 v2 = legTargets[2].position - legTargets[3].position;
-            Vector3 normal = Vector3.Cross(v1, v2).normalized;
-            Vector3 up = Vector3.Lerp(lastBodyUp, normal, 1f / (float)(smoothness + 1));
-            transform.up = up;
-            lastBodyUp = up;
+            OrientBody();
         }
+    }
+
+    // This hasn't worked for me, I think the legs are in the wrong order
+    void OrientBody()
+    {
+        Vector3 v1 = legTargets[0].position - legTargets[1].position;
+        Vector3 v2 = legTargets[2].position - legTargets[3].position;
+        Vector3 normal = Vector3.Cross(v1, v2).normalized;
+        Vector3 up = Vector3.Lerp(lastBodyUp, normal, 1f / (float)(smoothness + 1));
+        transform.up = up;
+        lastBodyUp = up;
     }
 
     private void OnDrawGizmosSelected()

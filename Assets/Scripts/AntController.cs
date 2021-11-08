@@ -6,8 +6,7 @@ public class AntController : MonoBehaviour
 {
     public float speed = 1f;
     public float rotationSpeed = 5f;
-
-
+    public bool manualControls = false;
 
     // External GameObjects
     GameObject player;
@@ -17,17 +16,18 @@ public class AntController : MonoBehaviour
     Transform rayOrigin;
     Transform moveToPoint;
     Transform headTarget;
+    Transform frontRayTarget;
+    Transform backRayTarget;
 
     ContactPoint[] cPoints;
     Vector3 groundNormal;
     Vector3 currentGravity;
     float reNormalTime = 5f;
-    bool isGrounded = true;
+    bool isGrounded = false;
+    bool isAnAbsoluteUnit = false;
 
-    // RayCasting angle modifier
-    float rayLength = 1.5f; // Turns out this matches the scale pretty closely
-    float forwardRay = 2f; // points in front of ant
-    float backwardRay = 3f; // points behind ant
+    // Length of front ray to use
+    float rayLength = 1.5f; // Turns out this roughly matches the scale pretty closely
 
     void OnCollisionEnter(Collision other)
     {
@@ -57,16 +57,18 @@ public class AntController : MonoBehaviour
     void CheckCorners()
     {
         RaycastHit hit;
-        if (Physics.Raycast(rayOrigin.position, -transform.up + (transform.forward / forwardRay), out hit))
+        Vector3 frontDir = frontRayTarget.position - rayOrigin.position;
+        if (Physics.Raycast(rayOrigin.position, frontDir, out hit))
         {
+            // Debug.DrawLine(rayOrigin.position, hit.point, Color.yellow);
             // Handle Inner Corners
             if (hit.distance < rayLength)
             {
-                // Debug.DrawLine(rayOrigin.position, hit.point, Color.yellow);
                 SetGroundNormal(hit.normal);
             }
         }
-        if (Physics.Raycast(rayOrigin.position, -transform.up - body.transform.forward / backwardRay, out hit))
+        Vector3 backDir = backRayTarget.position - rayOrigin.position;
+        if (Physics.Raycast(rayOrigin.position, backDir, out hit))
         {
             // Handle Outer Corners
             // Debug.DrawLine(rayOrigin.position, hit.point, Color.red);
@@ -89,26 +91,46 @@ public class AntController : MonoBehaviour
 
     void HandleAI()
     {
-        if (player)
+        // Giant Ants use different AI
+        if (isAnAbsoluteUnit)
         {
-            // Handle AI / Place moveToPoint on player // For now, set the moveToPoint location to the player's location
-            moveToPoint.position = player.transform.position;
-            headTarget.position = player.transform.position;
+            // Look at the player
+            if (player)
+            {
+                headTarget.position = player.transform.position;
+            }
+            transform.position += new Vector3(0f, Mathf.Sin(Time.realtimeSinceStartup) * 0.04f, 0f);
         }
+        if (!manualControls && !isAnAbsoluteUnit)
+        {
+            if (player)
+            {
+                // Handle AI / Place moveToPoint on player // For now, set the moveToPoint location to the player's location
+                moveToPoint.position = player.transform.position;
+                headTarget.position = player.transform.position;
+            }
 
-        float step = speed * Time.deltaTime; // calculate distance to move
-        transform.position = Vector3.MoveTowards(transform.position, moveToPoint.position, step);
+            float step = speed * Time.deltaTime; // calculate distance to move
+            transform.position = Vector3.MoveTowards(transform.position, moveToPoint.position, step);
 
-        Vector3 dir = (moveToPoint.position - transform.position).normalized;
-        Quaternion rotation = Quaternion.LookRotation(dir);
-        transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.fixedDeltaTime * rotationSpeed);
+            Vector3 dir = (moveToPoint.position - transform.position).normalized;
+            Quaternion rotation = Quaternion.LookRotation(dir);
+            transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.fixedDeltaTime * rotationSpeed);
+        }
+        else if (manualControls)
+        {
+            ManualInput();
+        }
     }
 
     void SetGroundNormal(Vector3 normal)
     {
-        groundNormal = normal;
-        Quaternion tilt = Quaternion.FromToRotation(body.transform.up, groundNormal);
-        body.transform.rotation = Quaternion.Lerp(body.transform.rotation, tilt * body.transform.rotation, reNormalTime * Time.deltaTime);
+        if (!isAnAbsoluteUnit)
+        {
+            groundNormal = normal;
+            Quaternion tilt = Quaternion.FromToRotation(body.transform.up, groundNormal);
+            body.transform.rotation = Quaternion.Lerp(body.transform.rotation, tilt * body.transform.rotation, reNormalTime * Time.deltaTime);
+        }
     }
 
     void ManualInput()
@@ -119,7 +141,7 @@ public class AntController : MonoBehaviour
             float value = Input.GetAxis("Vertical");
             if (value > 0)
             {
-                body.transform.Translate(Vector3.forward * value * Time.fixedDeltaTime * 2.5f);
+                body.transform.Translate(Vector3.forward * value * Time.fixedDeltaTime * speed);
             }
         }
 
@@ -132,6 +154,8 @@ public class AntController : MonoBehaviour
     {
         body = GetComponent<Rigidbody>();
         rayOrigin = gameObject.transform.Find("RayOrigin");
+        frontRayTarget = gameObject.transform.Find("FrontRayTarget");
+        backRayTarget = gameObject.transform.Find("BackRayTarget");
 
         moveToPoint = gameObject.transform.Find("MoveTarget");
         /// we need to detach the MoveTarget from the ant or it will move with the ant.
@@ -144,6 +168,9 @@ public class AntController : MonoBehaviour
         rayLength = transform.localScale.x; // Set length of forward raycast to the scale of the ant
 
         player = GameObject.Find("Player");
+
+        // If scale is very large, the ant is HUGE and needs to function differently
+        isAnAbsoluteUnit = (transform.localScale.x > 40) ? true : false;
     }
 
     // Update is called once per frame
