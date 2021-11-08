@@ -18,7 +18,9 @@ public class PlayerController : MonoBehaviour
     public RectTransform jetPackBar = null;
     public float bulletSpeed = 50f;
     public Rigidbody bullet = null;
+    public Transform muzzle = null;
     public float timeBetweenShooting = 0.25f;
+    public float spread = 0.1f;
 
     private float cameraPitch = 0f;
     private float velocityY = 0f;
@@ -142,12 +144,13 @@ public class PlayerController : MonoBehaviour
 
     void UpdateShooting()
     {
-        if (Input.GetButtonDown("Fire1") && readyToShoot)
+        if (Input.GetButton("Fire1") && readyToShoot)
         {
             readyToShoot = false;
 
-            Vector3 bulletPosition = transform.position;
-            bulletPosition.y += 0.5f;
+            //Vector3 bulletPosition = transform.position;
+            //bulletPosition.y += 0.5f;
+            Vector3 bulletPosition = muzzle.position;
 
             // calculate direction to shoot bullet in
             Ray ray = playerCamera.GetComponent<Camera>().ViewportPointToRay(new Vector3(0.5f,  0.5f, 0f));
@@ -162,6 +165,10 @@ public class PlayerController : MonoBehaviour
                 targetPoint = ray.GetPoint(75);
             }
             Vector3 bulletDirection = targetPoint - bulletPosition;
+
+            float spreadX = Random.Range(-spread, spread);
+            float spreadY = Random.Range(-spread, spread);
+            bulletDirection += new Vector3(spreadX, spreadY, 0f);
 
             // create bullet and rotate it
             Rigidbody bulletClone = (Rigidbody)Instantiate(bullet, bulletPosition, Quaternion.identity);

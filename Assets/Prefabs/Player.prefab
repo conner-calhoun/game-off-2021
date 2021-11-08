@@ -224,4 +224,6 @@ MonoBehaviour:
   jetPackBar: {fileID: 0}
   bulletSpeed: 1
   bullet: {fileID: 0}
+  muzzle: {fileID: 0}
   timeBetweenShooting: 0.25
+  spread: 0.25
