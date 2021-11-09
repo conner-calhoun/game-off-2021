@@ -7,6 +7,7 @@ public class AntController : MonoBehaviour
     public float speed = 1f;
     public float rotationSpeed = 5f;
     public bool manualControls = false;
+    public bool paralyzed = false;
 
     // External GameObjects
     GameObject player;
@@ -18,6 +19,7 @@ public class AntController : MonoBehaviour
     Transform headTarget;
     Transform frontRayTarget;
     Transform backRayTarget;
+    // Transform meshCollider;
 
     ContactPoint[] cPoints;
     Vector3 groundNormal;
@@ -34,6 +36,17 @@ public class AntController : MonoBehaviour
         if (other.gameObject.tag == "AntIgnoreCollision")
         {
             Physics.IgnoreCollision(other.gameObject.GetComponent<Collider>(), GetComponent<Collider>());
+        }
+
+        var contactPoints = new ContactPoint[other.contactCount];
+        other.GetContacts(contactPoints);
+        foreach (ContactPoint c in contactPoints)
+        {
+            if (c.thisCollider.tag == "DamageOnly")
+            {
+                Debug.Log("DAMAGEONLY COLLIDER!");
+                Physics.IgnoreCollision(other.gameObject.GetComponent<Collider>(), c.thisCollider);
+            }
         }
     }
 
@@ -91,6 +104,12 @@ public class AntController : MonoBehaviour
 
     void HandleAI()
     {
+        if (manualControls)
+        {
+            ManualInput();
+            return;
+        }
+
         // Giant Ants use different AI
         if (isAnAbsoluteUnit)
         {
@@ -101,7 +120,7 @@ public class AntController : MonoBehaviour
             }
             transform.position += new Vector3(0f, Mathf.Sin(Time.realtimeSinceStartup) * 0.04f, 0f);
         }
-        if (!manualControls && !isAnAbsoluteUnit)
+        else
         {
             if (player)
             {
@@ -110,16 +129,15 @@ public class AntController : MonoBehaviour
                 headTarget.position = player.transform.position;
             }
 
-            float step = speed * Time.deltaTime; // calculate distance to move
-            transform.position = Vector3.MoveTowards(transform.position, moveToPoint.position, step);
+            if (!paralyzed)
+            {
+                float step = speed * Time.deltaTime; // calculate distance to move
+                transform.position = Vector3.MoveTowards(transform.position, moveToPoint.position, step);
+            }
 
             Vector3 dir = (moveToPoint.position - transform.position).normalized;
             Quaternion rotation = Quaternion.LookRotation(dir);
             transform.rotation = Quaternion.Slerp(transform.rotation, rotation, Time.fixedDeltaTime * rotationSpeed);
-        }
-        else if (manualControls)
-        {
-            ManualInput();
         }
     }
 
