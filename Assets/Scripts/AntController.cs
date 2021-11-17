@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class AntController : MonoBehaviour
 {
+    public int health = 100;
     public float speed = 1f;
     public float rotationSpeed = 5f;
     public bool manualControls = false;
@@ -27,6 +28,7 @@ public class AntController : MonoBehaviour
     float reNormalTime = 5f;
     bool isGrounded = false;
     bool isAnAbsoluteUnit = false;
+    bool alive = true;
 
     // Length of front ray to use
     float rayLength = 1.5f; // Turns out this roughly matches the scale pretty closely
@@ -36,17 +38,6 @@ public class AntController : MonoBehaviour
         if (other.gameObject.tag == "AntIgnoreCollision")
         {
             Physics.IgnoreCollision(other.gameObject.GetComponent<Collider>(), GetComponent<Collider>());
-        }
-
-        var contactPoints = new ContactPoint[other.contactCount];
-        other.GetContacts(contactPoints);
-        foreach (ContactPoint c in contactPoints)
-        {
-            if (c.thisCollider.tag == "DamageOnly")
-            {
-                Debug.Log("DAMAGEONLY COLLIDER!");
-                Physics.IgnoreCollision(other.gameObject.GetComponent<Collider>(), c.thisCollider);
-            }
         }
     }
 
@@ -61,6 +52,7 @@ public class AntController : MonoBehaviour
         newCol.GetContacts(cPoints);
         foreach (ContactPoint cP in cPoints)
         {
+            Debug.Log("Tag: " + cP.thisCollider.tag);
             SetGroundNormal(cP.normal);
             return true;
         }
@@ -194,8 +186,15 @@ public class AntController : MonoBehaviour
     // Update is called once per frame
     void FixedUpdate()
     {
-        CheckCorners();
-        DoGravity();
-        HandleAI();
+        if (alive)
+        {
+            CheckCorners();
+            DoGravity();
+            HandleAI();
+        }
+        else
+        {
+            // Ragdoll on death, after a certain amount of time without movement, sleep the rigidbody
+        }
     }
 }
